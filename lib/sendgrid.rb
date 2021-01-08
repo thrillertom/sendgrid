@@ -25,7 +25,7 @@ module SendGrid
     base.class_eval do
       class << self
         attr_accessor :default_sg_category, :default_sg_options, :default_subscriptiontrack_text,
-                      :default_footer_text, :default_spamcheck_score, :default_sg_unique_args
+                      :default_footer_text, :default_spamcheck_score, :default_sg_unique_args, :default_sg_ip_pool
       end
       attr_accessor :sg_category, :sg_options, :sg_disabled_options, :sg_recipients, :sg_substitutions,
                     :subscriptiontrack_text, :footer_text, :spamcheck_score, :sg_unique_args, :sg_send_at, :sg_ip_pool
@@ -50,6 +50,10 @@ module SendGrid
     # mailer method.
     def sendgrid_category(category)
       self.default_sg_category = category
+    end
+
+    def sendgrid_ip_pool(ip_pool_name)
+      self.default_sg_ip_pool = ip_pool_name
     end
 
     # Enables a default option for all emails.
@@ -234,7 +238,11 @@ module SendGrid
     header_opts[:send_at] = @sg_send_at unless @sg_send_at.blank?
 
     #Set ip_pool if set by the user
-    header_opts[:ip_pool] = @sg_ip_pool unless @sg_ip_pool.blank?
+    if @sg_ip_pool
+      header_opts[:ip_pool] = @sg_ip_pool
+    elsif self.class.default_sg_ip_pool
+      header_opts[:ip_pool] = self.class.default_sg_ip_pool
+    end
 
     # Set multi-recipients
     if @sg_recipients && !@sg_recipients.empty?
